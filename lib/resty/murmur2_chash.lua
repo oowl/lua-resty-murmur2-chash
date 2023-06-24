@@ -1,9 +1,12 @@
 local ffi = require "ffi"
+local ffi_cast = ffi.cast
+local C = ffi.C
 
 local ok, new_tab = pcall(require, "table.new")
 if not ok or type(new_tab) ~= "function" then
-    new_tab = function(narr, nrec) return {} end
+    new_tab = function() return {} end
 end
+
 
 local DEFAULT_CHASH_RULE = "murmur2"
 
@@ -39,13 +42,13 @@ function _M.new(nodes, args)
         local node = nodes[i]
         for j = 1, virtual_node_num do
             local hash = calc_hash(node .. rule .. j)
-            chash_tables[hash] = node
+            chash_maps[hash] = node
             table.insert(chash_arrays, hash)
         end
     end
 
     table.sort(chash_arrays)
-    
+
     local self = {
         chash_arrays = chash_arrays,
         chash_maps = chash_maps,
@@ -59,8 +62,8 @@ end
 local function find_chash_value(chash_arrays, len, hash_key)
     local left = 1
     local right = len
-    local mid = 0
-    
+    local mid
+
     if hash_key < chash_arrays[left] or hash_key > chash_arrays[right] then
         return chash_arrays[left]
     end
